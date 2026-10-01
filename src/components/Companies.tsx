@@ -122,7 +122,7 @@ export function Companies() {
           </p>
 
           <motion.a
-            href="tel:+918830709272"
+            href="tel:+919326620829"
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
             className="inline-block px-8 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-full shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all"
