@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
 import avaxLogo from './logo/AvaxApparelsAndOrnaments.jpeg';
@@ -6,6 +7,7 @@ import lgtLogo from './logo/LGTHolidays.png';
 import supertechLogo from './logo/SupertechEV.jpeg';
 import shivashritLogo from './logo/ShivashritFoods.jpeg';
 import mumkinsLogo from './logo/mumkins.jpg';
+import tnbLogo from './logo/ShreeTNBPolymers.png';
 
 const companies = [
   { name: 'Shivashrit Foods', logo: shivashritLogo },
@@ -14,15 +16,63 @@ const companies = [
   { name: 'Gautam Exim', logo: gautamLogo },
   { name: 'LGT Holidays', logo: lgtLogo },
   { name: 'Mumkins', logo: mumkinsLogo },
+  { name: 'Shree TNB Polymers', logo: tnbLogo },
 ];
 
+// duplicate list for a seamless loop
 const marqueeCompanies = [...companies, ...companies];
-const MARQUEE_WIDTH = 1400; // px – adjust if spacing changes
-const MARQUEE_DURATION = 30; // seconds
+const MARQUEE_DURATION = 30; // seconds for one full loop
 
-// duplicate list for seamless loop
-const scrollingCompanies = [...companies, ...companies];
-const SCROLL_DURATION = 25; // seconds for one full loop
+/*
+  All continuous animations live in CSS and only touch `transform` and `opacity`,
+  so the browser runs them on the GPU compositor without repainting.
+*/
+const css = `
+@keyframes companies-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes companies-orb-a {
+  0%, 100% { transform: scale(1);   opacity: 0.55; }
+  50%      { transform: scale(1.3); opacity: 0.9; }
+}
+@keyframes companies-orb-b {
+  0%, 100% { transform: scale(1.3); opacity: 0.55; }
+  50%      { transform: scale(1);   opacity: 0.9; }
+}
+@keyframes companies-shimmer {
+  from { transform: translate3d(0, -100%, 0); }
+  to   { transform: translate3d(0, 200%, 0); }
+}
+
+.companies-marquee-track {
+  animation: companies-marquee ${MARQUEE_DURATION}s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.companies-marquee-track:hover { animation-play-state: paused; }
+
+.companies-orb {
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+.companies-orb-a { animation: companies-orb-a 4s ease-in-out infinite; }
+.companies-orb-b { animation: companies-orb-b 7s ease-in-out infinite; }
+
+/* shimmer only runs while the card is hovered */
+.companies-shimmer { opacity: 0; transition: opacity 0.2s; }
+.companies-card:hover .companies-shimmer {
+  opacity: 1;
+  animation: companies-shimmer 2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .companies-marquee-track,
+  .companies-orb-a,
+  .companies-orb-b,
+  .companies-card:hover .companies-shimmer { animation: none; }
+}
+`;
 
 export function Companies() {
   const [ref, inView] = useInView({
@@ -35,30 +85,28 @@ export function Companies() {
       id="companies"
       className="py-24 bg-gradient-to-br from-violet-100/50 via-fuchsia-100/30 to-pink-100/50 relative overflow-hidden"
     >
-      {/* Floating orbs */}
-      <motion.div
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.15, 0.25, 0.15],
+      <style>{css}</style>
+
+      {/*
+        Floating orbs: a radial gradient fades to transparent on its own, so the
+        expensive `filter: blur()` is no longer needed. Blurring a 384px element
+        while scaling it forces a re-raster every frame, which caused the flicker.
+      */}
+      <div
+        aria-hidden
+        className="companies-orb companies-orb-a absolute top-10 right-10 w-96 h-96 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(196,181,253,0.45) 0%, rgba(196,181,253,0) 70%)',
         }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute top-10 right-10 w-96 h-96 bg-violet-300 rounded-full filter blur-3xl"
       />
-      <motion.div
-        animate={{
-          scale: [1.3, 1, 1.3],
-          opacity: [0.15, 0.25, 0.15],
+      <div
+        aria-hidden
+        className="companies-orb companies-orb-b absolute bottom-10 left-10 w-96 h-96 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(240,171,252,0.45) 0%, rgba(240,171,252,0) 70%)',
         }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute bottom-10 left-10 w-96 h-96 bg-fuchsia-300 rounded-full filter blur-3xl"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -69,46 +117,31 @@ export function Companies() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <motion.h2
-            className="text-4xl sm:text-5xl mb-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 bg-clip-text text-transparent inline-block"
-            animate={{
-              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-            }}
-            style={{
-              backgroundSize: '200% 200%',
-            }}
-          >
+          {/* Static gradient text: animating background-position repaints every frame */}
+          <h2 className="text-4xl sm:text-5xl mb-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 bg-clip-text text-transparent inline-block">
             Trusted By Industry Leaders
-          </motion.h2>
+          </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Leading companies trust us to manage their investor relations and market reputation
           </p>
         </motion.div>
 
-{/* Auto-scrolling row */}
-<div className="mt-4 relative">
-  <div className="overflow-hidden">
-    <motion.div
-      className="flex gap-6"
-      animate={{ x: [0, -MARQUEE_WIDTH] }}
-      transition={{
-        duration: MARQUEE_DURATION,
-        repeat: Infinity,
-        ease: 'linear',
-      }}
-    >
-      {marqueeCompanies.map((company, index) => (
-        <div key={`${company.name}-${index}`} className="flex-shrink-0 w-64">
-          <CompanyCard company={company} />
+        {/* Auto-scrolling row */}
+        <div className="mt-4 relative">
+          <div className="overflow-hidden py-4">
+            {/* w-max + mr-6 (not gap) keeps both copies identical so -50% loops seamlessly */}
+            <div className="companies-marquee-track flex w-max">
+              {marqueeCompanies.map((company, index) => (
+                <div
+                  key={`${company.name}-${index}`}
+                  className="flex-shrink-0 w-64 mr-6"
+                >
+                  <CompanyCard company={company} />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      ))}
-    </motion.div>
-  </div>
-</div>
 
         {/* Additional CTA */}
         <motion.div
@@ -125,7 +158,7 @@ export function Companies() {
             href="tel:+919326620829"
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="inline-block px-8 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-full shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all"
+            className="inline-block px-8 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-full shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-shadow"
           >
             Become a Partner
           </motion.a>
@@ -135,31 +168,33 @@ export function Companies() {
   );
 }
 
-function CompanyCard({ company }: { company: (typeof companies)[0] }) {
-  const isShivashrit = company.name === 'Shivashrit Foods';
+const CompanyCard = memo(function CompanyCard({
+  company,
+}: {
+  company: (typeof companies)[0];
+}) {
   const isLgt = company.name === 'LGT Holidays';
-  const isMumkins = company.name === 'Mumkins';
 
   return (
-    <div className="relative p-6 bg-white/90 backdrop-blur-xl rounded-2xl border border-violet-200/50 hover:border-violet-400/60 transition-all group overflow-hidden shadow-md hover:shadow-xl hover:shadow-violet-200/50 cursor-pointer">
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+    // backdrop-blur removed: 14 blurred cards inside a moving layer is very costly
+    <div className="companies-card relative p-6 bg-white/95 rounded-2xl border border-violet-200/50 hover:border-violet-400/60 transition-[border-color,box-shadow] group overflow-hidden shadow-md hover:shadow-xl hover:shadow-violet-200/50 cursor-pointer">
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col items-center justify-center h-28">
+      <div className="relative z-10 flex flex-col items-center justify-center">
         <div
-          className={
-            isLgt
-              ? 'w-32 h-25 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-3 shadow-inner overflow-hidden'
-              : isShivashrit
-              ? 'w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-3 shadow-inner overflow-hidden'
-              : isMumkins
-              ? 'w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-3 shadow-inner overflow-hidden'
-              : 'w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-3 shadow-inner overflow-hidden'
-          }
+          className={`${
+            isLgt ? 'w-32' : 'w-24'
+          } h-24 p-2 rounded-2xl bg-white flex items-center justify-center mb-3 shadow-inner overflow-hidden`}
         >
           <img
             src={company.logo}
             alt={company.name}
-            className="max-w-full max-h-full object-contain"
+            width={96}
+            height={96}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="w-full h-full object-contain"
           />
         </div>
 
@@ -168,15 +203,14 @@ function CompanyCard({ company }: { company: (typeof companies)[0] }) {
         </div>
       </div>
 
-      <motion.div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100"
+      <div
+        aria-hidden
+        className="companies-shimmer absolute inset-0 pointer-events-none"
         style={{
           background:
             'linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.1) 50%, transparent 100%)',
         }}
-        animate={{ y: ['-100%', '200%'] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
       />
     </div>
   );
-}
+});

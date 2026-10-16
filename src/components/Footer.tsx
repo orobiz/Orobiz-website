@@ -231,7 +231,7 @@ export function Footer() {
             <p className="text-gray-600">© {currentYear} orobiz. All rights reserved.</p>
             <div className="flex gap-6">
               <a
-                href="/privacy-policy.html"
+                href="/privacy-policy"
                 target="_blank"
                 rel="noreferrer"
                 className="text-gray-600 hover:text-violet-600 transition-colors text-sm"
@@ -239,12 +239,12 @@ export function Footer() {
                 Privacy Policy
               </a>
               <a
-                href="/terms-and-conditions.html"
+                href="/terms-and-conditions"
                 target="_blank"
                 rel="noreferrer"
                 className="text-gray-600 hover:text-violet-600 transition-colors text-sm"
               >
-                Terms of Service
+                Terms And Conditions
               </a>
             </div>
           </div>
